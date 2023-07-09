@@ -18,7 +18,7 @@ function getTaggedReason(field) {
   }
 }
 
-function renderUserList(list, callback, callback2) {
+function renderUserList(list, callback, callback2, callback3) {
   const blockUserList = document.getElementById("block-porn-user-list");
   const countNode = document.getElementById("count");
 
@@ -73,10 +73,25 @@ function renderUserList(list, callback, callback2) {
       });
     });
 
+    const addListNode = document.createElement("div");
+    addListNode.classList.add("raw-button", "danger-button", "small-button", "mw-88");
+    addListNode.textContent = "加到黄推列表";
+    addListNode.addEventListener("click", function () {
+      debugger
+      // 加列表不用删 node, 只需要触发回调即可
+      console.log(callback3)
+
+      callback3({
+        restId: user.restId,
+        screen_name: user.screen_name,
+      });
+    });
+
     const buttonsNode = document.createElement("div");
     buttonsNode.classList.add("buttons");
     buttonsNode.appendChild(releaseNode);
     buttonsNode.appendChild(blockNode);
+    buttonsNode.appendChild(addListNode);
 
     countNode.textContent = list.length;
 
@@ -108,10 +123,32 @@ function blockHandler() {
   });
 }
 
+function addToListHandler() {
+  const hiddenInputs = Array.from(document.getElementsByClassName("hidden-porn-user-id"));
+  const hiddenIds = hiddenInputs.map((input) => input.value);
+
+  if (hiddenIds.length === 0) {
+    alert("请先获取屏蔽列表");
+    return;
+  }
+
+  const blockUserList = document.getElementById("block-porn-user-list");
+  blockUserList.innerHTML = "正在添加中....3 秒后刷新页面";
+
+  chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+    var activeTab = tabs[0];
+    chrome.tabs.sendMessage(activeTab.id, { messageType: "batchAddToScammersList", userIds: hiddenIds });
+  });
+}
+
 function getLatestPornListHandler() {
   chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
     var activeTab = tabs[0];
     chrome.tabs.sendMessage(activeTab.id, { messageType: "getLatestPornList" }, function (response) {
+      if (!response) {
+        alert("请先获取屏蔽列表");
+        return true;
+      }
       renderUserList(
         response.list,
         (user) => {
@@ -119,6 +156,11 @@ function getLatestPornListHandler() {
         },
         (user) => {
           chrome.tabs.sendMessage(activeTab.id, { messageType: "blockOneUser", user });
+        },
+        (user) => {
+          console.log(activeTab);
+
+          chrome.tabs.sendMessage(activeTab.id, { messageType: "addOneScammerToList", user });
         }
       );
     });
@@ -138,4 +180,6 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("block-porn-refresh-btn").addEventListener("click", getLatestPornListHandler);
   document.getElementById("block-porn-block-btn").addEventListener("click", blockHandler);
   document.getElementById("block-porn-reset-btn").addEventListener("click", resetHandler);
+  document.getElementById("block-porn-add-to-list-btn").addEventListener("click", addToListHandler);
+  
 });

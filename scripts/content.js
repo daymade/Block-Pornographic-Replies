@@ -127,6 +127,13 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     batchBlockPornUserList(userIds);
   }
 
+  if (message.messageType === "batchAddToScammersList") {
+    const userIds = message.userIds;
+
+    // TODO: 目前尝试一起请求，待观察 twitter 的政策，看后续是否模拟人工操作
+    batchAddToScammersList(userIds);
+  }
+
   if (message.messageType === "setTargetUserFree") {
     const user = message.user;
     removeUserFromPornList(user);
@@ -136,11 +143,18 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.messageType === "resetApp") {
     resetApp();
   }
-
+  
   if (message.messageType === "blockOneUser") {
     const user = message.user;
     if (user.restId) {
       batchBlockPornUserList([user.restId]);
+    }
+  }
+
+  if (message.messageType === "addOneScammerToList") {
+    const user = message.user;
+    if (user.restId) {
+      batchAddToScammersList([user.restId]);
     }
   }
 });
@@ -157,6 +171,9 @@ function getCookie(key) {
 }
 
 function blockTargetUser(userId) {
+  // 作为推特 List 的 Owner, 不能拉黑 List 里的任何人, 否则就会把它移出列表了.
+  // 这里禁用掉拉黑功能.
+  return 
   const csrfToken = getCookie("ct0");
   return fetch("https://twitter.com/i/api/1.1/blocks/create.json", {
     headers: {
@@ -172,6 +189,39 @@ function blockTargetUser(userId) {
     method: "POST",
   });
 }
+
+function addTargetUserToList(userId) {
+  const csrfToken = getCookie("ct0");
+  return fetch("https://twitter.com/i/api/graphql/27lfFOrDygiZs382QLttKA/ListAddMember", {
+    headers: {
+      // `authorization` 是 main.js 里的写死的参数，不区分用户,不清楚 Twitter 是否会定期更改
+      authorization:
+        "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+      "content-type": "application/json",
+      "x-csrf-token": csrfToken,
+      "x-twitter-active-user": "yes",
+      "x-twitter-auth-type": "OAuth2Session",
+    },
+    body: JSON.stringify({
+      "variables": {
+        // 这个 listId 只有 daymade 本人有添加权限, 推特不支持其他人维护列表
+        "listId": "1677334530754248706",
+        "userId": String(userId) // 这里将userId转换为字符串类型
+      },
+      "features": {
+        "rweb_lists_timeline_redesign_enabled": true,
+        "responsive_web_graphql_exclude_directive_enabled": true,
+        "verified_phone_label_enabled": false,
+        "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
+        "responsive_web_graphql_timeline_navigation_enabled": true
+      },
+      "queryId": "27lfFOrDygiZs382QLttKA"
+    }),
+    method: "POST"
+  });
+}
+
+
 
 function blockAjax() {
   return blockTargetUser("3269947842");
@@ -189,6 +239,12 @@ function batchBlockPornUserList(userIds) {
       // remove from porn list
       removeUserFromPornList({ restId: userId });
     });
+  });
+}
+
+function batchAddToScammersList(userIds) {
+  userIds.forEach((userId) => {
+    addTargetUserToList(userId);
   });
 }
 
