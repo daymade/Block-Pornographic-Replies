@@ -211,7 +211,6 @@ function addTargetUserToList(userId) {
       "variables": {
         // 这个 listId 只有 daymade 本人有添加权限, 推特不支持其他人维护列表
         // 将listId 更改为tianyi的方便调试
-        //"listId": "1677334530754248706",
         "listId": "1678354536933597185",
         "userId": String(userId) // 这里将userId转换为字符串类型
       },

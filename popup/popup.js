@@ -169,7 +169,6 @@ function getLatestPornListHandler() {
 
 // 导入已有列表的按钮handler
 function loadExistListHandler() {
-  // TODO
   // 发送Message 由content.js 接收执行相应函数
   chrome.tabs.query({currentWindow: true , active: true}, function (tabs) {
     var activeTab = tabs[0];
