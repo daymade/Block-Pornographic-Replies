@@ -143,7 +143,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.messageType === "resetApp") {
     resetApp();
   }
-  
+
   if (message.messageType === "blockOneUser") {
     const user = message.user;
     if (user.restId) {
@@ -156,6 +156,11 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (user.restId) {
       batchAddToScammersList([user.restId]);
     }
+  }
+  if (message.messageType === "loadExistList") {
+    // 手动添加~
+    const userIds = [3269947842,3226033382,411093204];
+    batchAddToScammersList(userIds);
   }
 });
 
@@ -173,7 +178,7 @@ function getCookie(key) {
 function blockTargetUser(userId) {
   // 作为推特 List 的 Owner, 不能拉黑 List 里的任何人, 否则就会把它移出列表了.
   // 这里禁用掉拉黑功能.
-  return 
+  return
   const csrfToken = getCookie("ct0");
   return fetch("https://twitter.com/i/api/1.1/blocks/create.json", {
     headers: {
@@ -205,7 +210,9 @@ function addTargetUserToList(userId) {
     body: JSON.stringify({
       "variables": {
         // 这个 listId 只有 daymade 本人有添加权限, 推特不支持其他人维护列表
-        "listId": "1677334530754248706",
+        // 将listId 更改为tianyi的方便调试
+        //"listId": "1677334530754248706",
+        "listId": "1678354536933597185",
         "userId": String(userId) // 这里将userId转换为字符串类型
       },
       "features": {

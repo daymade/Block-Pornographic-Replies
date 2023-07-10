@@ -167,6 +167,17 @@ function getLatestPornListHandler() {
   });
 }
 
+// 导入已有列表的按钮handler
+function loadExistListHandler() {
+  // TODO
+  // 发送Message 由content.js 接收执行相应函数
+  chrome.tabs.query({currentWindow: true , active: true}, function (tabs) {
+    var activeTab = tabs[0];
+    chrome.tabs.sendMessage(activeTab.id, {messageType: "loadExistList"});
+ })
+
+}
+
 function resetHandler() {
   const blockUserList = document.getElementById("block-porn-user-list");
   blockUserList.innerHTML = "已重置，刷新页面后生效";
@@ -181,5 +192,5 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("block-porn-block-btn").addEventListener("click", blockHandler);
   document.getElementById("block-porn-reset-btn").addEventListener("click", resetHandler);
   document.getElementById("block-porn-add-to-list-btn").addEventListener("click", addToListHandler);
-  
+  document.getElementById("block-porn-load-exist-list-btn").addEventListener("click", loadExistListHandler);
 });
